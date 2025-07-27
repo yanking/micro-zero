@@ -1,0 +1,32 @@
+version: v2
+plugins:
+  # 默认用最新版本
+  - local: protoc-gen-go
+    #  - remote: buf.build/protocolbuffers/go
+    # protoc-gen-go 插件
+    out: api/proto/gen
+    opt:
+      - paths=source_relative
+
+  - local: protoc-gen-go-grpc
+    #  - remote: buf.build/grpc/go
+    # protoc-gen-go-grpc 插件
+    out: api/proto/gen
+    opt:
+      - paths=source_relative
+      - require_unimplemented_servers=false
+
+  - local: protoc-gen-grpc-gateway
+    #  - remote: buf.build/grpc-ecosystem/gateway
+    out: api/proto/gen
+    opt:
+      - paths=source_relative
+      - generate_unbound_methods=true
+
+  - local: protoc-gen-openapiv2
+    #  - remote: buf.build/grpc-ecosystem/openapiv2
+    out: api/openapi
+    opt:
+      - allow_delete_body=true
+      - logtostderr=true
+

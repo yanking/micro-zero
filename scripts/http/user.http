@@ -1,0 +1,14 @@
+### POST CreateUser 创建用户
+POST http://{{host}}/v1/users
+Content-Type: application/json
+Host: {{host}}
+
+{
+  "username": "{{username}}",
+  "password": "{{password}}",
+  "nickname": "{{nickname}}",
+  "email": "{{email}}",
+  "phone": "{{phone}}"
+}
+
+###
