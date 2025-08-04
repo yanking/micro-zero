@@ -2,10 +2,6 @@ package app
 
 import (
 	"context"
-	"github.com/yanking/micro-zero/pkg/log"
-	genericoptions "github.com/yanking/micro-zero/pkg/options"
-	"github.com/yanking/micro-zero/pkg/version"
-	"k8s.io/component-base/term"
 	"os"
 	"runtime"
 	"strings"
@@ -16,6 +12,13 @@ import (
 	_ "go.uber.org/automaxprocs"
 	"k8s.io/component-base/cli"
 	cliflag "k8s.io/component-base/cli/flag"
+	"k8s.io/component-base/term"
+
+	"github.com/yanking/micro-zero/pkg/config"
+	"github.com/yanking/micro-zero/pkg/container"
+	"github.com/yanking/micro-zero/pkg/log"
+	genericoptions "github.com/yanking/micro-zero/pkg/options"
+	"github.com/yanking/micro-zero/pkg/version"
 )
 
 // App is the main structure of a cli application.
@@ -43,6 +46,12 @@ type App struct {
 	// watching and re-reading config files
 	// +optional
 	watch bool
+
+	// +optional
+	defaultComponents DefaultComponents
+
+	// +optional
+	componentRunner ComponentRunner
 
 	contextExtractors map[string]func(context.Context) string
 }
@@ -134,6 +143,20 @@ func WithDefaultValidArgs() Option {
 func WithWatchConfig() Option {
 	return func(app *App) {
 		app.watch = true
+	}
+}
+
+// WithDefaultComponents sets the application's default components provider.
+func WithDefaultComponents(provider DefaultComponents) Option {
+	return func(app *App) {
+		app.defaultComponents = provider
+	}
+}
+
+// WithComponentRunner sets the application's component runner.
+func WithComponentRunner(runner ComponentRunner) Option {
+	return func(app *App) {
+		app.componentRunner = runner
 	}
 }
 
@@ -278,6 +301,20 @@ func (app *App) runCommand(cmd *cobra.Command, args []string) error {
 		} else if app.options != nil {
 			cliflag.PrintFlags(cmd.Flags())
 		}
+	}
+
+	// 如果提供了组件运行器，则使用它来运行应用
+	if app.componentRunner != nil {
+		// 创建容器并传递给组件运行器
+		var c *container.Container
+		c = container.New(app.name)
+
+		// 如果配置中包含ShutdownOverallTimeout，则设置容器选项
+		if cfg, ok := app.options.(*config.Config); ok {
+			c = container.New(app.name, container.WithShutdownOverallTimeout(cfg.ShutdownOverallTimeout))
+		}
+
+		return app.componentRunner.RunWithComponents(c)
 	}
 
 	if app.healthCheckFunc != nil {

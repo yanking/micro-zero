@@ -39,6 +39,8 @@ type Config struct {
 	GRPCOptions *genericoptions.GRPCOptions `json:"grpc" mapstructure:"grpc"`
 	// MySQLOptions 包含 MySQL 配置选项.
 	MySQLOptions *genericoptions.MySQLOptions `json:"mysql" mapstructure:"mysql"`
+	// RedisOptions 包含 Redis 配置选项.
+	RedisOptions *genericoptions.RedisOptions `json:"redis" mapstructure:"redis"`
 }
 
 // New 创建带有默认值的 Config 实例.
@@ -52,6 +54,7 @@ func New() *Config {
 		HTTPOptions:            genericoptions.NewHTTPOptions(),
 		GRPCOptions:            genericoptions.NewGRPCOptions(),
 		MySQLOptions:           genericoptions.NewMySQLOptions(),
+		RedisOptions:           genericoptions.NewRedisOptions(),
 	}
 	opts.HTTPOptions.Addr = ":5555"
 	opts.GRPCOptions.Addr = ":6666"
@@ -68,6 +71,7 @@ func (c *Config) Flags() (fss cliflag.NamedFlagSets) {
 	c.HTTPOptions.AddFlags(fss.FlagSet("HTTP"))
 	c.GRPCOptions.AddFlags(fss.FlagSet("gRPC"))
 	c.MySQLOptions.AddFlags(fss.FlagSet("MySQL"))
+	c.RedisOptions.AddFlags(fss.FlagSet("Redis"))
 
 	return fss
 }
@@ -89,6 +93,7 @@ func (c *Config) Validate() error {
 	errs = append(errs, c.LogsOptions.Validate()...)
 	errs = append(errs, c.HTTPOptions.Validate()...)
 	errs = append(errs, c.MySQLOptions.Validate()...)
+	errs = append(errs, c.RedisOptions.Validate()...)
 
 	// 如果是 gRPC 或 gRPC-Gateway 模式，校验 gRPC 配置
 	if c.ServerMode == known.GRPCServerMode || c.ServerMode == known.GRPCGatewayServerMode {
